@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "..\\DeepLearning"
+		},
+		{
+			"path": "..\\Kube"
+		},
+		{
+			"path": "..\\create-react-app-auth-amplify"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"python.terminal.activateEnvInCurrentTerminal": true
+	}
+}

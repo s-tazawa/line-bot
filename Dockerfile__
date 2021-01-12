@@ -1,0 +1,69 @@
+# Define global args
+ARG FUNCTION_DIR="/src/"
+
+# Stage 1 - bundle base image + runtime
+# Grab a fresh copy of the image and install GCC
+FROM python:3.9-alpine3.12 AS python-alpine
+# Install GCC (Alpine uses musl but we compile and link dependencies with GCC)
+RUN apk add --no-cache \
+    libstdc++
+
+# Stage 2 - build function and dependencies
+
+# Install aws-lambda-cpp build dependencies
+RUN apk add --no-cache \
+    build-base \
+    libtool \
+    autoconf \
+    automake \
+    libexecinfo-dev \
+    make \
+    cmake \
+    libcurl \
+    wget \
+    bash \
+    which \
+    groff
+
+# Install AWS CLI
+RUN pip install awscli
+
+FROM python-alpine AS build-image
+
+# Authenticating with AWS CLI
+ARG AWS_ACCESS_KEY_ID
+ARG AWS_SECRET_ACCESS_KEY
+ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+ENV AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+
+# Include global args in this stage of the build
+# Create function directory
+RUN mkdir -p /src/
+# Copy handler function
+COPY ./src/* /src/
+
+RUN ls -la /src/
+
+# Install the function's dependencies
+RUN aws s3 cp s3://aws-lambda-runtime-clients/python/awslambdaruntimeclient-0.0.1.tar.gz awslambdaruntimeclient.tar.gz && \
+    python3.9 -m pip install \
+    awslambdaruntimeclient.tar.gz \
+    --target /src/
+
+# Stage 3 - final runtime image
+# Grab a fresh copy of the Python image
+FROM python-alpine
+
+# Set working directory to function root directory
+WORKDIR /src/
+# Copy in the built dependencies
+COPY --from=build-image ./src /src
+
+RUN ls -la /src
+
+RUN ls -la /usr/local/bin
+
+RUN ls -la /usr/bin
+
+ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaruntimeclient" ]
+CMD [ "main.lambda_handler" ]

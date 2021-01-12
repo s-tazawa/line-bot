@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "..\\..\\sam-app"
+		},
+		{
+			"path": "..\\..\\line-bot-sam"
+		}
+	],
+	"settings": {}
+}
